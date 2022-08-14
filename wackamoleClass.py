@@ -119,7 +119,7 @@ class Hammer:
             pygame.K_x,pygame.K_c,pygame.K_v
         ]
         self.hit = 0
-        self.punlishment = 0.002
+        self.punlishment = 0.1
         self._score = 0
         self.scoring()
         
