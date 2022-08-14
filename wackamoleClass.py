@@ -42,6 +42,8 @@ class Mole:
             ]
         self.sound = pygame.mixer.Sound('pickup.wav')
         self._score = 0
+        self.molingCost = 0.005
+        self.juicy = 0.02
         self.scoring()
 
     def scoring(self):
@@ -66,6 +68,7 @@ class Hammer:
             pygame.K_s,pygame.K_d,pygame.K_f,
             pygame.K_x,pygame.K_c,pygame.K_v
         ]
+        self.punlishment = 0.002
         self._score = 0
         self.scoring()
         
@@ -76,6 +79,7 @@ class Hammer:
         for j in range(9):
             moling = hole.checkOpen(j)
             if moling:
+                mole._score -= mole.molingCost
                 if keys[self.pad[j]]: 
                     hole.closeHole(j)
                     self.hit[j]=1
@@ -85,10 +89,10 @@ class Hammer:
                     self.sound.play(maxtime=500, fade_ms=200)
                     # print(f'Hit!, hole:{j},Pad:{self.pad[j]}')
                 else:
-                    mole._score +=0.02
+                    mole._score +=mole.juicy
             else:
                 if keys[self.pad[j]]: 
-                  self._score-=0.005
+                  self._score-=self.punlishment
             if keys[self.pad[j]] == 0: 
                 self.hit[j]=0
         mole.scoring()
