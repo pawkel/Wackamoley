@@ -23,6 +23,7 @@ class Hole:
             return True
         else:
             return False
+
     def drawHoles(self):
         self.count = 0
         for hole in self.holes:
@@ -33,6 +34,27 @@ class Hole:
             else:
                 self.win.blit(self.hole_opened,(x, y))
             self.count+=1
+
+    def updateGame(self, keys, mole, hammer):
+        for j in range(9):
+            moling = keys[mole.pad[j]]
+            hammering = keys[hammer.pad[j]]
+            if moling and hammering:
+                hammer.hammered()
+                mole.hammered()
+                self.closeHole(j)
+            elif moling and not hammering:
+                mole.happy()
+                self.openHole(j)
+            elif not moling and hammering:
+                print('hammer hurts')
+                self.closeHole(j)
+            else:
+                self.closeHole(j)
+        self.drawHoles()
+        self.win.blit(hammer.score, (20, 40))
+        self.win.blit(mole.score, (self.sw-200, 40))
+
 class Mole:
     def __init__(self):
         self.pad = [
@@ -47,6 +69,13 @@ class Mole:
     def scoring(self):
         self.score = font.render(f'Mole: {math.floor(self._score)}', True, (255,0,0))
 
+    def hammered(self):
+        self.sound.stop()
+        self._score -=1
+
+    def happy(self):
+        self._socre +=self.
+        
     def update(self,keys,hole,hammer):
         for j in range(9):
             if keys[self.pad[j]]:
@@ -71,6 +100,10 @@ class Hammer:
         
     def scoring(self):
         self.score = font.render(f'Hammer: {math.floor(self._score)}', True, (255,0,0))
+
+    def hammered(self):
+        self._score +=1
+        self.sound.play(maxtime=500, fade_ms=200)
 
     def update(self,keys,hole,mole):
         for j in range(9):
