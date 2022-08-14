@@ -1,4 +1,4 @@
-import pygame,math
+import pygame, math
 pygame.init()
 font = pygame.font.SysFont(None, 40)
 class Hole:
@@ -12,7 +12,6 @@ class Hole:
         self.sw = win.get_width()
         self.x = self.sw//3
         self.y = self.sh//3
-        self.count = 0
         hole_opened = pygame.image.load('hole_opened.png')
         hole_closed = pygame.image.load('hole_closed.png')
         hole_hammered = pygame.image.load('hole_being_hammered.png')
@@ -22,7 +21,7 @@ class Hole:
         self.hole_hammered = pygame.transform.scale(hole_hammered, (100,175))
         self.mole_hammered = pygame.transform.scale(mole_hammered, (110,185))
 
-    def drawHoles(self):
+    def draw(self):
         count = 0
         for hole in self.holes:
             row, col = divmod(count, 3)
@@ -43,20 +42,22 @@ class Hole:
         self.mole.reset_score()
         self.hammer.reset_score()
 
-    def updateGame(self, keys):
+    def updateHole(self, keys):
         for j in range(9):
             moling = keys[self.mole.pad[j]]
             hammering = keys[self.hammer.pad[j]]
             if sum(self.hit) == 0: ## only update if the hit state relaxed back
                 if moling and not hammering:
-                    if self.mole.moled==0:
+                    self.mole.moling_cost()
+                    if self.mole.moled==0: ## cool down time for mole
                         self.mole.happy()
                         self.holes[j] = 1
                 elif not moling and hammering:
-                    if self.hammer.hit==0:
+                    if self.hammer.hit==0: ## cool down time for hammer
                         self.holes[j]=2
                         self.hammer.empty()
                 elif moling and hammering:
+                    self.mole.moling_cost()
                     if self.mole.moled==0 and self.hammer.hit==0:
                         self.mole.hammered()
                         self.hammer.hammered()
@@ -70,9 +71,11 @@ class Hole:
                 if  self.hit[j] <0.65:               
                     self.holes[j] = 0
 
+    def updateGame(self, keys):
+        self.updateHole(keys)
         self.mole.stateUpdate()
         self.hammer.stateUpdate()
-        self.drawHoles()
+        self.draw()
 
 class Mole:
     def __init__(self):
@@ -83,7 +86,7 @@ class Mole:
             ]
         self.sound = pygame.mixer.Sound('pickup.wav')
         self._score = 0
-        self.molingCost = 0.003
+        self.molingCost = 0.005
         self.moled = 0
         self.juicy = 0.1
         self.scoring()
@@ -95,7 +98,7 @@ class Mole:
         self.score = font.render(f'Mole: {math.floor(self._score)}', True, (255,0,0))
 
     def stateUpdate(self):
-        self.moled -= 0.2
+        self.moled -= 0.2 ## relaxed to non-moling state
         self.moled = max(self.moled, 0)
         self.scoring()
 
@@ -104,8 +107,11 @@ class Mole:
         self._score -=1
         self.moled = 1
 
+    def moling_cost(self):
+        self._score -=self.molingCost
+
     def happy(self):
-        self._score +=self.juicy-self.molingCost
+        self._score +=self.juicy
         self.moled = 1
         self.sound.play()
                   

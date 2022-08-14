@@ -15,12 +15,11 @@ hole = Hole(win, mole,hammer)
 while run:
     win.fill(bgcolor)
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type in [pygame.QUIT,pygame.MOUSEWHEEL]:
             run = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        elif event.type == pygame.MOUSEBUTTONDOWN:
             hole.resetGame()
-        if event.type == pygame.MOUSEWHEEL:
-            run = False
+
     keys = pygame.key.get_pressed()
     hole.updateGame(keys)
     pygame.display.update()
