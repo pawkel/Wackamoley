@@ -10,7 +10,7 @@ clock = pygame.time.Clock()
 bgcolor = (0,155,255)
 mole = Mole()
 hammer = Hammer()
-hole = Hole(win)
+hole = Hole(win, mole,hammer)
 
 while run:
     win.fill(bgcolor)
@@ -18,9 +18,10 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            mole._score = 0
-            hammer._score = 0
+            hole.resetGame()
+        if event.type == pygame.MOUSEWHEEL:
+            run = False
     keys = pygame.key.get_pressed()
-    hole.updateGame(keys, mole, hammer)
+    hole.updateGame(keys)
     pygame.display.update()
     clock.tick(100)

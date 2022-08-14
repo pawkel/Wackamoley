@@ -2,10 +2,12 @@ import pygame,math
 pygame.init()
 font = pygame.font.SysFont(None, 40)
 class Hole:
-    def __init__(self,win):
+    def __init__(self,win, mole, hammer):
         self.holes = [0,0,0,0,0,0,0,0,0]
         self.hit = [0,0,0,0,0,0,0,0,0]
         self.win = win
+        self.mole = mole
+        self.hammer = hammer
         self.sh = win.get_height()
         self.sw = win.get_width()
         self.x = self.sw//3
@@ -21,9 +23,9 @@ class Hole:
         self.mole_hammered = pygame.transform.scale(mole_hammered, (110,185))
 
     def drawHoles(self):
-        self.count = 0
+        count = 0
         for hole in self.holes:
-            row, col = divmod(self.count, 3)
+            row, col = divmod(count, 3)
             x, y = self.x*col+50,self.y*row+80
             if hole == 0:
                 self.win.blit(self.hole_closed,(x, y))
@@ -33,36 +35,44 @@ class Hole:
                 self.win.blit(self.hole_hammered,(x,y))
             else: ## moling and hammered
                 self.win.blit(self.mole_hammered,(x,y))
-            self.count+=1
+            count+=1
+        self.win.blit(self.hammer.score, (20, 40))
+        self.win.blit(self.mole.score, (self.sw-200, 40))
 
-    def updateGame(self, keys, mole, hammer):
+    def resetGame(self):
+        self.mole.reset_score()
+        self.hammer.reset_score()
+
+    def updateGame(self, keys):
         for j in range(9):
-            moling = keys[mole.pad[j]]
-            hammering = keys[hammer.pad[j]]
+            moling = keys[self.mole.pad[j]]
+            hammering = keys[self.hammer.pad[j]]
             if sum(self.hit) == 0: ## only update if the hit state relaxed back
                 if moling and not hammering:
-                    mole.happy()
-                    self.holes[j] = 1
+                    if self.mole.moled==0:
+                        self.mole.happy()
+                        self.holes[j] = 1
                 elif not moling and hammering:
-                    self.holes[j]=2
-                    hammer.empty()
+                    if self.hammer.hit==0:
+                        self.holes[j]=2
+                        self.hammer.empty()
                 elif moling and hammering:
-                    mole.hammered()
-                    hammer.hammered()
-                    self.holes[j]=3
-                    self.hit[j] = 1
+                    if self.mole.moled==0 and self.hammer.hit==0:
+                        self.mole.hammered()
+                        self.hammer.hammered()
+                        self.holes[j]=3
+                        self.hit[j] = 1
                 else:
                     self.holes[j] = 0
             else:
-                self.hit[j] -=0.01
+                self.hit[j] -=0.02
                 self.hit[j] = max(self.hit[j],0)
                 if  self.hit[j] <0.65:               
                     self.holes[j] = 0
-        mole.scoring()
-        hammer.scoring()
+
+        self.mole.stateUpdate()
+        self.hammer.stateUpdate()
         self.drawHoles()
-        self.win.blit(hammer.score, (20, 40))
-        self.win.blit(mole.score, (self.sw-200, 40))
 
 class Mole:
     def __init__(self):
@@ -74,18 +84,29 @@ class Mole:
         self.sound = pygame.mixer.Sound('pickup.wav')
         self._score = 0
         self.molingCost = 0.005
+        self.moled = 0
         self.juicy = 0.02
         self.scoring()
+
+    def reset_score(self):
+        self._score = 0
 
     def scoring(self):
         self.score = font.render(f'Mole: {math.floor(self._score)}', True, (255,0,0))
 
+    def stateUpdate(self):
+        self.moled -= 0.3
+        self.moled = max(self.moled, 0)
+        self.scoring()
+
     def hammered(self):
         self.sound.stop()
         self._score -=1
+        self.moled = 1
 
     def happy(self):
         self._score +=self.juicy-self.molingCost
+        self.moled = 1
         self.sound.play()
                   
 class Hammer:
@@ -97,6 +118,7 @@ class Hammer:
             pygame.K_s,pygame.K_d,pygame.K_f,
             pygame.K_x,pygame.K_c,pygame.K_v
         ]
+        self.hit = 0
         self.punlishment = 0.002
         self._score = 0
         self.scoring()
@@ -104,11 +126,21 @@ class Hammer:
     def scoring(self):
         self.score = font.render(f'Hammer: {math.floor(self._score)}', True, (255,0,0))
 
+    def stateUpdate(self):
+        self.hit -= 0.2
+        self.hit = max(self.hit, 0)
+        self.scoring()
+
+    def reset_score(self):
+        self._score = 0
+
     def hammered(self):
         self._score +=1
+        self.hit = 1
         self.sound.play(maxtime=500, fade_ms=200)
 
     def empty(self):
+        self.hit = 1
         self._score -= self.punlishment
 
         
