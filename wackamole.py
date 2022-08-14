@@ -21,8 +21,6 @@ while run:
             mole._score = 0
             hammer._score = 0
     keys = pygame.key.get_pressed()
-    # mole.update(keys,hole,hammer)
-    # hammer.update(keys,hole,mole)
     hole.updateGame(keys, mole, hammer)
     pygame.display.update()
     clock.tick(100)

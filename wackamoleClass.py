@@ -4,6 +4,7 @@ font = pygame.font.SysFont(None, 40)
 class Hole:
     def __init__(self,win):
         self.holes = [0,0,0,0,0,0,0,0,0]
+        self.hit = [0,0,0,0,0,0,0,0,0]
         self.win = win
         self.sh = win.get_height()
         self.sw = win.get_width()
@@ -12,17 +13,12 @@ class Hole:
         self.count = 0
         hole_opened = pygame.image.load('hole_opened.png')
         hole_closed = pygame.image.load('hole_closed.png')
+        hole_hammered = pygame.image.load('hole_being_hammered.png')
+        mole_hammered = pygame.image.load('mole_being_hammered.png')
         self.hole_opened = pygame.transform.scale(hole_opened, (100,100))
         self.hole_closed = pygame.transform.scale(hole_closed, (100,100))
-    def openHole(self,hole):
-        self.holes[hole] = 1
-    def closeHole(self,hole):
-        self.holes[hole] = 0
-    def checkOpen(self,hole):
-        if self.holes[hole]==1:
-            return True
-        else:
-            return False
+        self.hole_hammered = pygame.transform.scale(hole_hammered, (100,175))
+        self.mole_hammered = pygame.transform.scale(mole_hammered, (110,185))
 
     def drawHoles(self):
         self.count = 0
@@ -31,26 +27,38 @@ class Hole:
             x, y = self.x*col+50,self.y*row+80
             if hole == 0:
                 self.win.blit(self.hole_closed,(x, y))
-            else:
+            elif hole == 1: ## moling but not hammered
                 self.win.blit(self.hole_opened,(x, y))
+            elif hole == 2: ## not moling and got hammered
+                self.win.blit(self.hole_hammered,(x,y))
+            else: ## moling and hammered
+                self.win.blit(self.mole_hammered,(x,y))
             self.count+=1
 
     def updateGame(self, keys, mole, hammer):
         for j in range(9):
             moling = keys[mole.pad[j]]
             hammering = keys[hammer.pad[j]]
-            if moling and hammering:
-                hammer.hammered()
-                mole.hammered()
-                self.closeHole(j)
-            elif moling and not hammering:
-                mole.happy()
-                self.openHole(j)
-            elif not moling and hammering:
-                print('hammer hurts')
-                self.closeHole(j)
+            if self.hit[j] ==0:
+                if moling and not hammering:
+                    mole.happy()
+                    self.holes[j] = 1
+                elif not moling and hammering:
+                    self.holes[j]=2
+                    hammer.empty()
+                elif moling and hammering:
+                    hammer.hammered()
+                    mole.hammered()
+                    self.holes[j]=3
+                    self.hit[j] = 1
+                else:
+                    self.holes[j] = 0
             else:
-                self.closeHole(j)
+                self.holes[j] = 0
+                self.hit[j] -=0.01
+                self.hit[j] = max(self.hit[j],0)
+        mole.scoring()
+        hammer.scoring()
         self.drawHoles()
         self.win.blit(hammer.score, (20, 40))
         self.win.blit(mole.score, (self.sw-200, 40))
@@ -76,20 +84,11 @@ class Mole:
         self._score -=1
 
     def happy(self):
-        self._socre +=self.
-        
-    def update(self,keys,hole,hammer):
-        for j in range(9):
-            if keys[self.pad[j]]:
-                if hammer.hit[j]==0:
-                    hole.openHole(j)
-                    self.sound.play(maxtime=500, fade_ms=200)
-            else:
-                hole.closeHole(j)
-            
+        self._score +=self.juicy-self.molingCost
+        self.sound.play()
+                  
 class Hammer:
     def __init__(self):
-        self.hit = [0,0,0,0,0,0,0,0,0]
         self.sound = pygame.mixer.Sound('Ricochet.wav')
         self.sound.set_volume(0.9)
         self.pad = [
@@ -108,26 +107,7 @@ class Hammer:
         self._score +=1
         self.sound.play(maxtime=500, fade_ms=200)
 
-    def update(self,keys,hole,mole):
-        for j in range(9):
-            moling = hole.checkOpen(j)
-            if moling:
-                mole._score -= mole.molingCost
-                if keys[self.pad[j]]: 
-                    hole.closeHole(j)
-                    self.hit[j]=1
-                    mole.sound.stop()
-                    self._score +=1
-                    mole._score -=1
-                    self.sound.play(maxtime=500, fade_ms=200)
-                    # print(f'Hit!, hole:{j},Pad:{self.pad[j]}')
-                else:
-                    mole._score +=mole.juicy
-            else:
-                if keys[self.pad[j]]: 
-                  self._score-=self.punlishment
-            if keys[self.pad[j]] == 0: 
-                self.hit[j]=0
-        mole.scoring()
-        self.scoring()
+    def empty(self):
+        self._score -= self.punlishment
+
         
