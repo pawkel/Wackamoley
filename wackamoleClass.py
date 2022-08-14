@@ -39,7 +39,7 @@ class Hole:
         for j in range(9):
             moling = keys[mole.pad[j]]
             hammering = keys[hammer.pad[j]]
-            if self.hit[j] ==0:
+            if sum(self.hit) == 0: ## only update if the hit state relaxed back
                 if moling and not hammering:
                     mole.happy()
                     self.holes[j] = 1
@@ -47,16 +47,17 @@ class Hole:
                     self.holes[j]=2
                     hammer.empty()
                 elif moling and hammering:
-                    hammer.hammered()
                     mole.hammered()
+                    hammer.hammered()
                     self.holes[j]=3
                     self.hit[j] = 1
                 else:
                     self.holes[j] = 0
             else:
-                self.holes[j] = 0
                 self.hit[j] -=0.01
                 self.hit[j] = max(self.hit[j],0)
+                if  self.hit[j] <0.65:               
+                    self.holes[j] = 0
         mole.scoring()
         hammer.scoring()
         self.drawHoles()
