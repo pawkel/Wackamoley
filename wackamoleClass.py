@@ -83,9 +83,9 @@ class Mole:
             ]
         self.sound = pygame.mixer.Sound('pickup.wav')
         self._score = 0
-        self.molingCost = 0.005
+        self.molingCost = 0.003
         self.moled = 0
-        self.juicy = 0.02
+        self.juicy = 0.1
         self.scoring()
 
     def reset_score(self):
@@ -95,7 +95,7 @@ class Mole:
         self.score = font.render(f'Mole: {math.floor(self._score)}', True, (255,0,0))
 
     def stateUpdate(self):
-        self.moled -= 0.3
+        self.moled -= 0.2
         self.moled = max(self.moled, 0)
         self.scoring()
 
@@ -119,7 +119,7 @@ class Hammer:
             pygame.K_x,pygame.K_c,pygame.K_v
         ]
         self.hit = 0
-        self.punlishment = 0.1
+        self.punlishment = 0.02
         self._score = 0
         self.scoring()
         
